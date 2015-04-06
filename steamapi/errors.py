@@ -70,12 +70,19 @@ class APIConfigurationError(APIFailure):
     """
     pass
 
+class APINotModified(APIException):
+    """
+    Content for this request do not change
+    """
+    pass
 
 @debug.no_return
 def raiseAppropriateException(status_code):
     if status_code // 100 == 4:
         if status_code == 404:
             raise APINotFound()
+        elif status_code == 304:
+            raise APINotModifed()
         elif status_code == 401:
             raise APIUnauthorized()
         elif status_code == 400:
