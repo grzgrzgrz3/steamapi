@@ -366,7 +366,7 @@ class APIConnection(object):
     # Use double curly-braces to tell Python that these variables shouldn't be expanded yet.
     QUERY_TEMPLATE = "{domain}/{{interface}}/{{command}}/{{version}}/".format(domain=QUERY_DOMAIN)
 
-    def __init__(self, api_key=None, settings={}):
+    def __init__(self, api_key=None, timeout=60, settings={}):
         """
         NOTE: APIConnection will soon be made deprecated by APIInterface.
 
@@ -383,6 +383,7 @@ class APIConnection(object):
 
         """
         self.reset(api_key)
+        self.set_timeout(timeout)
 
         self.precache = True
 
@@ -391,6 +392,9 @@ class APIConnection(object):
 
     def reset(self, api_key):
         self._api_key = api_key
+
+    def set_timeout(self,timeout):
+        self._timeout = timeout
 
     def call(self, interface, command, version, method=GET, **kwargs):
         """
@@ -429,12 +433,14 @@ class APIConnection(object):
         if self._api_key is not None:
             kwargs["key"] = self._api_key
 
+        headers = kwargs.get('headers',None)
+
         query = self.QUERY_TEMPLATE.format(interface=interface, command=command, version=version)
 
         if method == POST:
-            response = requests.request(method, query, data=kwargs)
+            response = requests.request(method, query, data=kwargs, headers=headers, timeout=self._timeout)
         else:
-            response = requests.request(method, query, params=kwargs)
+            response = requests.request(method, query, params=kwargs, headers=headers, timeout=self._timeout)
 
         if response.status_code != 200:
             errors.raiseAppropriateException(response.status_code)
@@ -445,7 +451,7 @@ class APIConnection(object):
                 return APIResponse(response_obj['response'])
             else:
                 return APIResponse(response_obj)
-
+        return response
 
 class APIResponse(object):
     """
@@ -511,6 +517,11 @@ class APIResponse(object):
     def __iter__(self):
         return self._real_dictionary.__iter__()
 
+    def _update(self,a_res):
+        self._real_dictionary.update(a_res._real_dictionary)
+    
+    def __delitem__(self,item):
+        self._real_dictionary.__delitem__(item)
 
 class SteamObject(object):
     """

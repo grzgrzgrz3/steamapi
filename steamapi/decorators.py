@@ -98,13 +98,11 @@ class Singleton:
     def __init__(self, decorated):
         self._lock = threading.Lock()
         self._decorated = decorated
-
     def __call__(self, *args, **kwargs):
         """
         Returns the singleton instance. Upon its first call, it creates a
         new instance of the decorated class and calls its `__init__` method.
         On all subsequent calls, the already created instance is returned.
-
         """
         with self._lock:
             try:
@@ -115,3 +113,17 @@ class Singleton:
 
     def __instancecheck__(self, inst):
         return isinstance(inst, self._decorated)
+
+class ArgsSingleton(Singleton):
+    """
+    returning same instance only when same args and kwargs specifed
+    """
+    _instances = {}
+    def __call__(self,*args, **kwargs):
+        values = hash(tuple(list(args)+kwargs.values()))
+        with self._lock:
+            try:
+                return self._instances[values]
+            except KeyError:
+                self._instances.update({values:self._decorated(*args, **kwargs)})
+                return self._instances[values]
