@@ -410,7 +410,7 @@ class APIConnection(object):
                        If APIConnection has an assoociated key, "key" will be overwritten by it, and overriding "format"
                        cancels out automatic parsing. (The resulting object WILL NOT be an APIResponse but a string.)
 
-        :rtype : APIResponse or str
+        :rtype : APIResponse or requests.Response
         """
         for argument in kwargs:
             if type(kwargs[argument]) is list:
@@ -517,7 +517,7 @@ class APIResponse(object):
     def __iter__(self):
         return self._real_dictionary.__iter__()
 
-    def _update(self,a_res):
+    def update_(self,a_res):
         self._real_dictionary.update(a_res._real_dictionary)
     
     def __delitem__(self,item):
